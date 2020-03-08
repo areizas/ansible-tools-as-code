@@ -1,0 +1,18 @@
+- hosts: all
+  become: yes
+  vars_files:
+    - vars.yml
+  vars:
+      no_logging: no
+  roles:
+    - ANXS.postgresql
+  tasks:
+    - name: Edit configuration files
+      script: ./edit_configuration_files.sh
+      args:
+        executable: bash 
+
+    - name: Restart postgresql service
+      service:
+        name: postgresql
+        state: restarted

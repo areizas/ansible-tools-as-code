@@ -1,0 +1,75 @@
+- hosts:  all
+  become: yes  
+  vars_files:
+    - vars.yml
+  tasks:
+
+## Install SonarQube
+  - name: update the apt cache
+    apt: 
+      update_cache=yes cache_valid_time=360
+    
+  - name: Install required tools
+    apt: name={{item}} state=present force=yes    
+    with_items:    
+    - default-jre  
+    - unzip
+    
+  - name: Create sonar user
+    command: adduser --system --home=/opt/{{ sonar_user }} --group {{ sonar_user }}
+    
+  - name: Download Sonar App
+    get_url:
+      url: https://binaries.sonarsource.com/Distribution/sonarqube/{{ sonar_version }}.zip
+      dest: /opt/{{ sonar_user }}
+      
+    become_user: '{{ sonar_user }}'
+  - name: Unarchive Sonar App
+    unarchive:
+      src: /opt/{{ sonar_user }}/{{ sonar_version }}.zip
+      dest: /opt/{{ sonar_user }}
+      remote_src: yes
+      
+    become_user: '{{ sonar_user }}'
+  - name: Configure database username
+    lineinfile:
+      path: /opt/{{ sonar_user }}/{{ sonar_version }}/conf/sonar.properties
+      regexp: '^#sonar.jdbc.username'
+      line: 'sonar.jdbc.username={{ sonar_db_user }}'
+     
+    become_user: '{{ sonar_user }}' 
+  - name: Configure database password
+    lineinfile:
+      path: /opt/{{ sonar_user }}/{{ sonar_version }}/conf/sonar.properties
+      regexp: '^#sonar.jdbc.password'
+      line: 'sonar.jdbc.password={{ sonar_db_password }}'
+       
+    become_user: '{{ sonar_user }}'
+  - name: Configure database string connection
+    lineinfile:
+      path: /opt/{{ sonar_user }}/{{ sonar_version }}/conf/sonar.properties
+      regexp: '^#sonar.jdbc.url=jdbc:postgresql'
+      line: 'sonar.jdbc.url={{ sonar_db_url }}'
+     
+    become_user: '{{ sonar_user }}'
+  - name: Configure database string connection
+    lineinfile:
+      path: /opt/{{ sonar_user }}/{{ sonar_version }}/conf/sonar.properties
+      regexp: '^#sonar.web.host=0.0.0.0'
+      line: 'sonar.web.host=0.0.0.0'
+     
+    become_user: '{{ sonar_user }}'  
+  - name: Copy Service File
+    template: 
+      src:  templates/sonar.service.j2
+      dest: /etc/systemd/system/sonar.service
+    
+  - name: Enable Sonar at boot
+    command: systemctl enable sonar
+    
+  - name: Stop Sonar
+    command: systemctl stop sonar
+    
+  - name: Start Sonar
+    command: systemctl start sonar
+    

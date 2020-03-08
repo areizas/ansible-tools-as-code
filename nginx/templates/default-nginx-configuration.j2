@@ -1,0 +1,10 @@
+server {
+	server_name {{ server_name }};
+
+	listen {{ opened_port }};
+	listen [::]:{{ opened_port }};
+	
+	root {{ root_directory }};
+
+	index index.html;
+}

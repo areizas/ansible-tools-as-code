@@ -1,0 +1,23 @@
+---
+
+postgresql_version: 10 
+
+postgresql_databases:
+  - name: sonarqube
+    owner: sonarqube
+
+postgresql_users:
+
+  # postgresql >=10 does not accept unencrypted passwords 
+  # pass H@Sh1CoR3!S4cT
+  - name: sonarqube
+    pass: H@Sh1CoR3!S4cT  
+    encrypted: yes
+
+postgresql_database_schemas:
+  - database: sonarqube
+    state: present
+    schema: sonarqube
+    owner: sonarqube
+
+    

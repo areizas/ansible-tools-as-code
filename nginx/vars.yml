@@ -1,0 +1,8 @@
+---
+# Required Variables
+
+server_name: "_"
+default_server: true
+opened_port: "80"
+root_directory: "/var/www/html/example"
+root_directory_multiple: "/var/www/html/example"

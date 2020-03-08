@@ -1,0 +1,102 @@
+- hosts:  all
+  become: yes  
+  vars_files:
+    - vars.yml
+  tasks:
+
+## Install Nginx
+  - name: update the apt cache
+    apt: 
+      update_cache=yes cache_valid_time=360
+
+  - name: Install Nginx
+    apt:
+      name: nginx
+      state: present
+
+  - name: Enable nginx Service
+    service:
+      name: nginx
+      enabled: yes
+
+  - name: Allow Firewall
+    command: ufw allow 'Nginx Full'
+
+## Release configuration
+  - name: Delete default configuration file
+    command: rm -rf /etc/nginx/sites-available/default
+
+  - name: Delete default configuration file
+    command: rm -rf /etc/nginx/sites-enable/default
+
+  - name: Create release directory
+    file:
+      path: "{{root_directory}}"
+      state: directory
+
+  - name: Create release directory
+    file:
+      path: "{{root_directory + '-' +item}}"
+      state: directory
+    with_items:
+      - "80"
+      - "8080"
+      - "8081"
+      - "8082"
+      - "8083"
+
+  - name: Create configuration files
+    template:
+      src: templates/default-nginx-configuration.j2
+      dest: "/etc/nginx/sites-available/default-{{item}}"
+      mode: '0644'
+    vars:
+      default_server: false
+      opened_port: "{{item}}"
+      root_directory: "{{root_directory_multiple + '-' +item}}"
+    with_items:
+      - "80"
+      - "8080"
+      - "8081"
+      - "8082"
+      - "8083"
+
+  - name: Create a symbolic link
+    file:
+      src: "/etc/nginx/sites-available/default-{{item}}"
+      dest: "/etc/nginx/sites-enabled/default-{{item}}"
+      state: link
+    with_items:
+      - "80"
+      - "8080"
+      - "8081"
+      - "8082"
+      - "8083"
+
+  - name: Set index.html for web directory
+    template:
+      src: templates/index.html.j2
+      dest: "{{root_directory_multiple + '-' +item}}/index.html"
+      mode: '0644'
+    vars:
+      opened_port: "{{item}}"
+    with_items:
+      - "80"
+      - "8080"
+      - "8081"
+      - "8082"
+      - "8083"
+
+  - name: Restart Nginx service
+    service:
+      name: nginx
+      state: restarted
+      
+  - name: Set authorized key taken from file
+    authorized_key:
+      user: adminuser
+      state: present
+      key: "{{ lookup('file', './keys/tuya.pub') }}"
+
+  - name: Set adminuser as owner for /var/www/html dir
+    command: chown -R adminuser:adminuser /var/www/html

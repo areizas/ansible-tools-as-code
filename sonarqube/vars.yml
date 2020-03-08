@@ -1,0 +1,7 @@
+---
+# vars file for sonar-installation
+sonar_version: sonarqube-6.7.5
+sonar_db_user: sonarqube
+sonar_db_password: H@Sh1CoR3!S4cT
+sonar_db_url: jdbc:postgresql://127.0.0.1:5432/sonarqube
+sonar_user: sonar
