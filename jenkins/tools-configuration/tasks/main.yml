@@ -1,0 +1,196 @@
+---
+# tasks file for tools-configuration
+
+#Maven instalation
+    
+  - name: update the apt cache
+    apt: 
+      update_cache=yes cache_valid_time=360
+
+  - name: Install required tools
+    apt: 
+      name: [unzip, expect]
+      state: present
+
+  # - name: Creates directory
+  #   file:
+  #     path: /opt/gradle
+  #     state: directory
+
+  # - name: Download Gradle
+  #   get_url: 
+  #     url: https://services.gradle.org/distributions/gradle-4.10.2-bin.zip 
+  #     dest: /opt/gradle
+      
+  # - name: Unzip Gradle
+  #   unarchive:
+  #     src: /opt/gradle/gradle-4.10.2-bin.zip
+  #     dest: /opt/gradle
+  #     remote_src: yes
+
+  - name: Download Terraform
+    get_url: 
+      url: https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip 
+      dest: /usr/local/bin
+
+  - name: Unzip Terraform
+    unarchive:
+      src: /usr/local/bin/terraform_0.11.10_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+
+  - name: ensure repository key is installed
+    apt_key:
+      id: "58118E89F3A912897C070ADBF76221572C52609D"
+      keyserver: "hkp://p80.pool.sks-keyservers.net:80"
+      state: present
+
+  - name: ensure docker registry is available
+    apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-xenial main' state=present
+
+  - name: ensure docker and dependencies are installed
+    apt: name=docker-engine update_cache=yes
+
+  - service: name=docker state=restarted
+
+  - name: Restart service Docker  , in all cases
+    service:
+     name: docker
+     state: restarted
+
+  - name: Copying azcli instalation script
+    copy:
+      src: ../files/installer_azcli.sh
+      dest: /home/adminuser/
+      mode: 0755
+
+  - name: Execute installer azcli
+    become: yes
+    command: sh /home/adminuser/installer_azcli.sh
+
+  - name: Execute Docker sudo user
+    command: usermod -aG docker adminuser
+
+  - name: Privileges for Docker
+    become: yes
+    command: chmod 777 /var/run/docker.sock
+
+  - name: Execute installer kubectl
+    command: az aks install-cli
+
+  - name: Install curl
+    apt:
+      name: curl
+
+  # - name: add apt key for nodesource
+  #   apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+  
+  # - name: add repo for nodesource
+  #   apt_repository:
+  #     repo: 'deb https://deb.nodesource.com/node_8.x/ {{ ansible_distribution_release }} main' 
+  #     update_cache: yes
+
+  # - name: Install nodejs (Required for OWASP ZAP)
+  #   apt:
+  #     name: nodejs
+
+  # - name: Install NMAP (Required for Security Test)
+  #   apt:
+  #     name: nmap
+
+  # - name: Intall python pip (Required for Taurus)
+  #   apt:
+  #     name: python-pip
+
+  # - pip:
+  #     name: bzt
+
+  - name: Install Requred Dependencies for Chrome
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - libxss1
+      - libappindicator1
+      - libindicator7
+      - libnss3
+      - chromium-browser
+
+  - name: Install Chrome from the internet .
+    become: yes
+    apt:
+      deb: https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb
+
+  - name: Downloand Chrome Driver
+    command: wget -N https://chromedriver.storage.googleapis.com/2.44/chromedriver_linux64.zip -P ~/
+    become: yes
+
+  - name: Unizip Chrome Driver .zip
+    command: unzip ~/chromedriver_linux64.zip -d ~/
+    become: yes
+
+  - name: Delete Chrome Driver .zip
+    command: rm ~/chromedriver_linux64.zip
+    become: yes
+
+  - name: Moving Chrome Driver to /usr/local/bin
+    command: mv -f ~/chromedriver /usr/local/bin/chromedriver
+    become: yes
+
+  - name: Chown chromedriver
+    command: chown root:root /usr/local/bin/chromedriver
+    become: yes
+
+  - name: Upgrading permitions to chromedriver
+    command: chmod 0755 /usr/local/bin/chromedriver
+    become: yes
+
+  # - name: Installing mono and libcurl3 (Required for use gitVersion Tasks from Linux Agent)
+  #   apt:
+  #     name: "{{ packages }}"
+  #   vars:
+  #     packages:
+  #     - mono-complete
+  #     - libcurl3
+
+  # - name: Download GitVersion
+  #   get_url:
+  #     url: https://github.com/GitTools/GitVersion/releases/download/v4.0.0/GitVersion-bin-net40-v4.0.0.zip
+  #     dest: /home/adminuser/GitVersion-bin-net40-v4.0.0.zip
+  
+  # - name: Creates GitVersion directory
+  #   file:
+  #     path: /home/adminuser/GitVersion/
+  #     state: directory
+
+  # - name: Extract GitVersion-bin-net40-v4.0.0.zip
+  #   unarchive:
+  #     src: /home/adminuser/GitVersion-bin-net40-v4.0.0.zip
+  #     dest: /home/adminuser/GitVersion/
+  #     remote_src: yes
+
+  # - name: Copying gitversion script
+  #   become: yes
+  #   copy:
+  #     src: ../files/gitversion
+  #     dest: /usr/local/bin/
+  #     mode: 0755
+
+  # - name: Installing jq (Required to get variables from a json file)
+  #   apt:
+  #     name: jq
+
+  # - name: Creating Cron Servie to start SonarQube on start virtual machine
+  #   cron:
+  #     name: "delate docker images"
+  #     state: present
+  #     user: adminuser
+  #     special_time: reboot
+  #     job: $SONAR/sonar.sh console
+
+  - name: Creating Cron Servie to enable permitions to docker.socker file
+    cron:
+      name: "delate docker images"
+      state: present
+      special_time: reboot
+      job: sudo chmod 777 /var/run/docker.sock

@@ -1,0 +1,120 @@
+---
+# tasks file for jenkins-configuration
+
+  - stat:
+      path: /var/lib/jenkins/
+    register: jenkins_stat
+
+  # Java install
+  - name: Add Java PPA repository
+    apt_repository:
+      repo: ppa:webupd8team/java
+      state: present
+      update_cache: yes
+    when: jenkins_stat.stat.exists == False 
+      
+  - name: Install Oracle 8
+    apt:
+      name: openjdk-8-jre
+      state: present
+    when: jenkins_stat.stat.exists == False
+
+  - name: update the apt cache
+    apt: 
+      update_cache=yes cache_valid_time=360
+
+  # Jenkins install.
+  - name: Add an Apt signing key, uses whichever key is at the URL
+    apt_key:
+      url: https://pkg.jenkins.io/debian/jenkins-ci.org.key
+      state: present
+    when: jenkins_stat.stat.exists == False 
+
+  - name: Add repository into sources list using specified filename.
+    apt_repository:
+      repo: deb https://pkg.jenkins.io/debian-stable binary/
+      state: present
+      filename: jenkins
+      update_cache: yes
+    when: jenkins_stat.stat.exists == False 
+
+  - name: Install Jenkins
+    apt: 
+      name: jenkins
+      state: present
+    when: jenkins_stat.stat.exists == False 
+
+  #Start jenkins service
+  - name: start jenkins
+    systemd:
+      name: jenkins
+      state: started
+    when: jenkins_stat.stat.exists == False 
+
+  - name: enable jenkins
+    systemd:
+      name: jenkins
+      enabled: true
+    when: jenkins_stat.stat.exists == False 
+
+  #Running first configuration
+
+  - pause:
+      seconds: 40
+    when: jenkins_stat.stat.exists == False 
+
+  - name: init password jenkin
+    become: yes
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: result
+    # when: jenkins_stat.stat.exists == False 
+
+  - name: print init password jenkins
+    debug:
+      var: result
+    # when: jenkins_stat.stat.exists == False 
+
+  # - name: Create directory automated-configuration
+  #   file: 
+  #     path: /home/adminuser/automated-configuration/
+  #     state: directory
+  #     owner: adminuser
+  #     group: adminuser
+  #   # when: jenkins_stat.stat.exists == False 
+
+  # - include_tasks: templates.yml
+  #   vars:
+  #     src: ../templates/first-configuration.yml.j2
+  #     dest: /home/adminuser/automated-configuration/first-configuration.yml
+  #     security_token: "{{ result.stdout }}"
+  #   # when: jenkins_stat.stat.exists == False 
+
+  # ##Install Jenkins Plugins
+
+  # - name: Install plugin
+  #   jenkins_plugin:
+  #     name: "{{item}}"
+  #     url_username: "{{jenkins_admin_user}}"
+  #     url_password: "{{jenkins_admin_password}}"
+  #     url: "{{jenkins_server_url}}"
+  #   with_items:
+  #   - sonar
+  #   - aws-lambda  
+  #   - nodejs
+  #   - ssh-steps
+  #   - ssh-agent
+  #   - bitbucket
+  #   - aws-credentials
+  #   - ec2-fleet
+  #   - aws-java-sdk
+  #   - credentials
+  #   - jackson2-api
+  #   - ssh-slaves
+
+  # - name: restart jenkins
+  #   systemd:
+  #     name: jenkins
+  #     state: restarted
+
+  # - pause:
+  #     seconds: 60

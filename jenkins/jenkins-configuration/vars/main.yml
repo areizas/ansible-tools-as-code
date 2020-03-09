@@ -1,0 +1,8 @@
+---
+# vars file for jenkins-configuration
+
+jenkins_admin_user: root
+jenkins_admin_password: toor
+jenkins_admin_name: jenkins
+jenkins_admin_email: mateo.areiza@quind.io
+jenkins_server_url: http://jenkins-vm.eastus.cloudapp.azure.com:8080 #(Don't edit!)

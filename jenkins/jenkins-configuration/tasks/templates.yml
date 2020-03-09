@@ -1,0 +1,11 @@
+---
+# tasks file for tools-configuration
+
+#Pipeline template instalation
+  
+  - name: Generating file with a template
+    template: src="{{ src }}" dest="{{ dest }}"
+
+  - name: Run jenkins configuration
+    become_user: adminuser
+    shell: bzt "{{ dest }}"

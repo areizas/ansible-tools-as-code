@@ -1,0 +1,2 @@
+#!/bin/bash
+mono /home/adminuser/GitVersion/GitVersion.exe "$@"

@@ -1,0 +1,37 @@
+execution:
+- executor: selenium
+  scenario: assertby-Selenium
+  iterations: 1
+
+scenarios:
+  assertby-Selenium:
+    browser: Chrome  # available browsers are: ["Firefox", "Chrome", "Ie", "Opera"]
+    headless: true
+    timeout: 10s
+    think-time: 0s
+    requests:
+    - label: Jenkins first configuration
+      actions:
+      - go({{ jenkins_server_url }})
+    - label: Unlock Jenkins
+      actions:
+      - keysByID(security-token): {{ security_token }}
+      - clickByXPath(//*[@class="modal-footer"]/input)
+    - label: Install suggested plugins
+      actions:
+      - clickByXPath(//*[contains(text(),'Install suggested plugins')]//parent::a)
+      - pauseFor(50s)
+    - label: Create First Admin User
+      actions:
+      - switchFrame(index=1)
+      - keysByXPath(//input[@id]): {{ jenkins_admin_user }}
+      - keysByName(password1): {{ jenkins_admin_password }}
+      - keysByName(password2): {{ jenkins_admin_password }}
+      - keysByName(fullname): {{ jenkins_admin_name }}
+      - keysByName(email): {{ jenkins_admin_email }}
+      - switchFrame(relative=parent)
+      - clickByXPath(//*[contains(text(),'Save and Continue')])
+    - label: Save and finish
+      actions:
+      - clickByXPath(//*[contains(text(),'Save and Finish')])
+      - clickByXPath(//*[contains(text(),'Start using Jenkins')])
